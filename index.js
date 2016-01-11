@@ -1,10 +1,32 @@
 #!/usr/bin/env node
 
-// const child_process = require('child_process')
-//
-// var output = child_process.execSync('cd ../../ && git log')
+const git = require('gitty')
 
-var git    = require('gitty');
-var myRepo = git('./');
+const sortBy = require('lodash.sortby')
 
-console.log(output.toString())
+const logger = module.exports = function logger(repoPath, callback) {
+  var authors = {}
+
+  git(repoPath).log(function (err, log) {
+    if (err) return callback(err)
+
+    log.forEach(function (commit) {
+      var name = commit.author
+      var author = authors[name] || {}
+      author.name = name
+      author.commitCount = author.commitCount ? author.commitCount + 1 : 1
+      authors[name] = author
+    })
+
+    var result = sortBy(authors, 'commitCount')
+      .reverse()
+      .map(author => `${author.commitCount} ${author.name}`)
+      .join('\n')
+
+    return callback(null, result)
+  })
+}
+
+if (!process.parent) {
+  // logger(process.argv.slice(2)[0])
+}
