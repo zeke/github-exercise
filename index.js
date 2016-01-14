@@ -2,8 +2,6 @@
 
 const git = require('gitty')
 
-const sortBy = require('lodash.sortby')
-
 const logger = module.exports = function logger(repoPath, callback) {
   var authors = {}
 
@@ -12,15 +10,13 @@ const logger = module.exports = function logger(repoPath, callback) {
 
     log.forEach(function (commit) {
       var name = commit.author
-      var author = authors[name] || {}
-      author.name = name
-      author.commitCount = author.commitCount ? author.commitCount + 1 : 1
-      authors[name] = author
+      var count = authors[name] || 0
+      authors[name] = count + 1
     })
 
-    var result = sortBy(authors, 'commitCount')
-      .reverse()
-      .map(author => `${author.commitCount} ${author.name}`)
+    var result = Object.keys(authors)
+      .sort((author1,author2) => authors[author2] - authors[author1] )
+      .map(name => `${authors[name]} ${name}`)
       .join('\n')
 
     return callback(null, result)
